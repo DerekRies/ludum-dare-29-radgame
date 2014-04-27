@@ -47,13 +47,13 @@ var pAnimations = {
 var Player = function(game, x, y, frame) {
   Phaser.Sprite.call(this, game, x, y, 'p1');
 
+  this.game.input.keyboard.addCallbacks(this, this.onDownHandler, this.onUpHandler);
   this.animations.add('running', pAnimations.running, 24, true, false);
   this.animations.add('climbing', pAnimations.climbing, 6, true, false);
   this.animations.add('swimming', pAnimations.swimming, 3, true, false);
   this.anchor.setTo(0.5, 0.5);
-
   this.frameName = 'p1_stand.png';
-  this.speed = 0.2;
+
   this.states = {
     'standing': new StandingState(),
     'ducking': new DuckingState(),
@@ -61,7 +61,9 @@ var Player = function(game, x, y, frame) {
     'climbing': new ClimbingState(),
   };
   this.activeState = 'standing';
-  this.game.input.keyboard.addCallbacks(this, this.onDownHandler, this.onUpHandler);
+  // Attributes
+  this.baseSpeed = 0.2;
+  this.speed = this.baseSpeed;
 };
 
 Player.prototype = Object.create(Phaser.Sprite.prototype);
@@ -149,7 +151,10 @@ StandingState.prototype.update = function(entity) {
 
 StandingState.prototype.onDown = function(entity, e) {
   if(e.keyCode === Phaser.Keyboard.UP || e.keyCode === Phaser.Keyboard.W) {
+    // if colliding with a climbable object
     entity.transitionState('climbing');
+    // otherwise just jump
+    // entity.transitionState('jump');
   }
   if(e.keyCode === Phaser.Keyboard.DOWN || e.keyCode === Phaser.Keyboard.S) {
     entity.transitionState('ducking');
@@ -167,16 +172,12 @@ StandingState.prototype.enter = function(entity, oldState) {
 var DuckingState = function () {};
 DuckingState.prototype = new EntityState();
 DuckingState.prototype.constructor = DuckingState;
-DuckingState.prototype.update = function(entity) {
-  // body...
-};
 
 DuckingState.prototype.enter = function(entity, oldState) {
   entity.frameName = 'p1_duck.png';
 };
 
 DuckingState.prototype.onUp = function(entity, e) {
-  console.log(e);
   if(e.keyCode === Phaser.Keyboard.DOWN || e.keyCode === Phaser.Keyboard.S) {
     entity.transitionState('standing');
   }
@@ -195,7 +196,6 @@ ClimbingState.prototype.leave = function(entity, newState) {
 };
 
 ClimbingState.prototype.onUp = function(entity, e) {
-  console.log(e);
   if(e.keyCode === Phaser.Keyboard.UP || e.keyCode === Phaser.Keyboard.W) {
     entity.transitionState('standing');
   }

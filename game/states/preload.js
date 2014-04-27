@@ -8,11 +8,14 @@ function Preload() {
 Preload.prototype = {
   preload: function() {
     this.asset = this.add.sprite(this.width/2,this.height/2, 'preloader');
-    this.asset.anchor.setTo(0.5, 0.5);
+    // this.asset.anchor.setTo(0.5, 0.5);
 
     this.load.onLoadComplete.addOnce(this.onLoadComplete, this);
     this.load.setPreloadSprite(this.asset);
-    this.load.image('yeoman', 'assets/yeoman-logo.png');
+    // this.load.image('yeoman', 'assets/yeoman-logo.png');
+    // this.load.image('player', 'assets/Player/p1_front.png');
+    // this.load.spritesheet('p1', 'assets/Player/p1_spritesheet.png', 72, 97)
+    this.load.atlasJSONArray('p1', 'assets/greenalien.png', 'assets/greenalien.json');
 
   },
   create: function() {

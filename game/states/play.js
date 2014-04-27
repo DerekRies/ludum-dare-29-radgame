@@ -1,4 +1,4 @@
-
+var Player = require('../prefabs/player');
   'use strict';
   function Play() {}
   Play.prototype = {
@@ -14,6 +14,15 @@
       // this.sprite.body.velocity.y = this.game.rnd.integerInRange(-500,500);
 
       // this.sprite.events.onInputDown.add(this.clickListener, this);
+
+      var x = this.game.width/2,
+          y = this.game.height/2;
+      // this.player = new Player(this.game, x, y);
+      this.player = new Player(this.game, x, y);
+      this.game.add.existing(this.player)
+      window.player = this.player;
+      console.log(this);
+
     },
     update: function() {
 

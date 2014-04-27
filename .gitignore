@@ -1,4 +1,6 @@
 bower_components
 assets
 node_modules
+assets_old
+graphics
 *.log

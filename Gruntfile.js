@@ -57,7 +57,13 @@ module.exports = function (grunt) {
       dist: {
         files: [
           // includes files within path and its sub-directories
-          { expand: true, src: ['assets/**'], dest: 'dist/' },
+
+          // The below line is incredibly wasteful and slow, there's a perfectly fucking
+          // good assets folder in the source of the project that just need to be copied over
+          // every damn time. Since the rest of the generated project is so convoluted
+          // I'm just going to symlink the assets folder to dist/assets
+          // Jesus Christ man, why?
+          // { expand: true, src: ['assets/**'], dest: 'dist/' },
           { expand: true, flatten: true, src: ['game/plugins/*.js'], dest: 'dist/js/plugins/' },
           { expand: true, flatten: true, src: ['bower_components/**/build/*.js'], dest: 'dist/js/' },
           { expand: true, src: ['css/**'], dest: 'dist/' },

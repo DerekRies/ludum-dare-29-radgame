@@ -54,16 +54,22 @@ var Player = function(game, x, y, frame) {
   this.anchor.setTo(0.5, 0.5);
   this.frameName = 'p1_stand.png';
 
+
   this.states = {
     'standing': new StandingState(),
     'ducking': new DuckingState(),
-    // 'jumping': new JumpingState(),
+    'jumping': new JumpingState(),
     'climbing': new ClimbingState(),
   };
   this.activeState = 'standing';
   // Attributes
-  this.baseSpeed = 0.2;
+  this.baseSpeed = 150;
   this.speed = this.baseSpeed;
+  this.doubleJump = true;
+
+  this.game.physics.arcade.enableBody(this);
+  this.body.linearDamping = 1;
+  this.body.collideWorldBounds = true;
 };
 
 Player.prototype = Object.create(Phaser.Sprite.prototype);
@@ -110,6 +116,43 @@ Player.prototype.reduceAir = function(reduction) {
   this.air -= reduction;
 };
 
+Player.prototype.jump = function() {
+  this.body.velocity.y = -400;
+};
+
+Player.prototype.canClimb = function() {
+  // TODO: Expand the search for a climbable object 1 to the left and right
+  var map = this.game.state.states.play.map;
+  var curTile = map.getTileWorldXY(this.position.x,this.position.y, 70, 70, 'Meta');
+  if(curTile){
+    var metaLayer = _.find(map.tilesets, {'name': 'meta_tiles'});
+    var tileData = metaLayer.tileProperties[curTile.index - metaLayer.firstgid];
+    if(tileData.meta === "1") {
+      return curTile;
+    }
+    else{
+      return false;
+    }
+  }
+  else{
+    return false;
+  }
+};
+
+Player.prototype.canJump = function() {
+  if(this.activeState === 'jumping') {
+    if(this.doubleJump && !this.states['jumping'].alreadyDoubleJumped){
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+  else {
+    return true;
+  }
+};
+
 Player.prototype.transitionState = function(newState) {
   this.states[this.activeState].leave(this, newState);
   this.states[newState].enter(this, this.activeState);
@@ -129,22 +172,24 @@ var StandingState = function () {};
 StandingState.prototype = new EntityState();
 StandingState.prototype.constructor = StandingState;
 StandingState.prototype.update = function(entity) {
+  entity.body.velocity.x = 0;
   if(entity.game.input.keyboard.isDown(Phaser.Keyboard.Q)) {
     entity.y++;
   }
   else if(entity.game.input.keyboard.isDown(Phaser.Keyboard.E)) {
-    entity.y--;
+    // entity.y--;
+    entity.jump();
   }
 
   if(entity.game.input.keyboard.isDown(Phaser.Keyboard.LEFT) ||
             entity.game.input.keyboard.isDown(Phaser.Keyboard.A)) {
-    entity.x -= entity.speed;
+    entity.body.velocity.x = -entity.speed;
     entity.scale.x = -1;
     entity.animations.play('running');
   }
   else if(entity.game.input.keyboard.isDown(Phaser.Keyboard.RIGHT) ||
             entity.game.input.keyboard.isDown(Phaser.Keyboard.D)) {
-    entity.x += entity.speed;
+    entity.body.velocity.x = entity.speed;
     entity.scale.x = 1;
     entity.animations.play('running');
   }
@@ -156,10 +201,15 @@ StandingState.prototype.update = function(entity) {
 
 StandingState.prototype.onDown = function(entity, e) {
   if(e.keyCode === Phaser.Keyboard.UP || e.keyCode === Phaser.Keyboard.W) {
-    // if colliding with a climbable object
-    entity.transitionState('climbing');
+    var climbable = entity.canClimb();
+    if(climbable){
+      entity.transitionState('climbing');
+      entity.position.x = climbable.worldX + 35;
+    }
+    else {
+      entity.transitionState('jumping');
+    }
     // otherwise just jump
-    // entity.transitionState('jump');
   }
   if(e.keyCode === Phaser.Keyboard.DOWN || e.keyCode === Phaser.Keyboard.S) {
     entity.transitionState('ducking');
@@ -192,17 +242,51 @@ var ClimbingState = function () {};
 ClimbingState.prototype = new EntityState();
 ClimbingState.prototype.constructor = ClimbingState;
 
+ClimbingState.prototype.update = function(entity) {
+  if (entity.canClimb()) {
+    entity.body.velocity.y = -150;
+  }
+  else {
+    entity.transitionState('standing');
+  }
+};
+
 ClimbingState.prototype.enter = function (entity, oldState) {
+  entity.body.allowGravity = false;
   entity.animations.play('climbing');
 };
 
 ClimbingState.prototype.leave = function(entity, newState) {
+  entity.body.allowGravity = true;
   entity.animations.stop('climbing');
 };
 
 ClimbingState.prototype.onUp = function(entity, e) {
   if(e.keyCode === Phaser.Keyboard.UP || e.keyCode === Phaser.Keyboard.W) {
     entity.transitionState('standing');
+  }
+};
+
+
+var JumpingState = function () {
+  this.alreadyDoubleJumped = false;
+};
+JumpingState.prototype = new EntityState();
+JumpingState.prototype.constructor = JumpingState;
+
+JumpingState.prototype.enter = function(entity, oldState) {
+  entity.jump();
+  console.log('stand bitch');
+  entity.frameName = 'p1_jump.png';
+};
+
+JumpingState.prototype.onDown = function(entity, e) {
+  console.log(e);
+  if(e.keyCode === Phaser.Keyboard.UP || e.keyCode === Phaser.Keyboard.W) {
+    if(entity.canJump()){
+      this.alreadyDoubleJumped = true;
+      entity.jump();
+    }
   }
 };
 
@@ -290,11 +374,12 @@ module.exports = Menu;
 
 },{}],6:[function(require,module,exports){
 var Player = require('../prefabs/player');
+
   'use strict';
   function Play() {}
   Play.prototype = {
     create: function() {
-      // this.game.physics.startSystem(Phaser.Physics.ARCADE);
+      this.game.physics.startSystem(Phaser.Physics.ARCADE);
       // this.sprite = this.game.add.sprite(this.game.width/2, this.game.height/2, 'yeoman');
       // this.sprite.inputEnabled = true;
 
@@ -306,23 +391,65 @@ var Player = require('../prefabs/player');
 
       // this.sprite.events.onInputDown.add(this.clickListener, this);
 
-      this.map = this.game.add.tilemap('purplemap');
-      this.map.addTilesetImage('purple');
-      this.firstLayer = this.map.createLayer('Ground');
-      this.firstLayer.resizeWorld();
+      // this.map = this.game.add.tilemap('purplemap');
+      // this.map.addTilesetImage('purple');
+      // this.firstLayer = this.map.createLayer('Ground');
+      // this.firstLayer.resizeWorld();
 
-      var x = this.game.width/2,
-          y = this.game.height/2;
-      this.player = new Player(this.game, x, 2100);
+      this.tilemapJson = this.game.cache.getJSON('tilemap');
+      this.tilemapSpawns = _.find(this.tilemapJson.layers, { 'name': 'Spawns'});
+
+
+
+      this.map = this.game.add.tilemap('base');
+      this.map.addTilesetImage('tiles', 'tiles');
+      this.map.addTilesetImage('items_spritesheet', 'items');
+      this.map.addTilesetImage('buildings', 'buildings');
+      this.map.addTilesetImage('winter', 'winter');
+      this.map.addTilesetImage('meta_tiles', 'meta');
+      this.bgTerrainLayer = this.map.createLayer('Bg Terrain');
+      this.terrainLayer = this.map.createLayer('Terrain');
+      this.decorationLayer = this.map.createLayer('Decoration Layer');
+      this.collisionLayer = this.map.createLayer('Collision');
+      this.metaLayer = this.map.createLayer('Meta');
+      this.terrainLayer.resizeWorld();
+
+      this.metaLayer.visible = false;
+      this.collisionLayer.visible = false;
+
+      console.log(this.collisionLayer);
+
+      this.map.setCollisionBetween(65,66, true, this.collisionLayer);
+      this.player = new Player(this.game, 0, 0);
       this.game.add.existing(this.player)
+      this.game.physics.arcade.gravity.y = 1000;
+      this.spawnPlayer();
+
       window.player = this.player;
+      // Meta tile properties
+      // 1 - Climbable
+      // 2 - Collectible
+      // 3 - Interactible
+      // 4 - Killzone
 
       this.game.camera.follow(this.player);
     },
     update: function() {
+      this.game.physics.arcade.collide(this.player, this.collisionLayer);
     },
     clickListener: function() {
       this.game.state.start('gameover');
+    },
+    spawnPlayer: function () {
+      console.log(this.tilemapSpawns);
+      var playerSpawns = _.select(this.tilemapSpawns.objects, { 'name': 'Player Spawn'});
+      var playerSpawn = _.find(playerSpawns, function(spawn) {
+        return Math.round(Math.random()) === 1;
+      }) || playerSpawns[0];
+      var x = Math.random() * playerSpawn.width + playerSpawn.x;
+      var y = Math.random() * playerSpawn.height + playerSpawn.y;
+      this.player.reset(x,y);
+      console.log(playerSpawn);
     }
   };
 
@@ -348,6 +475,15 @@ Preload.prototype = {
     this.load.atlasJSONArray('p1', 'assets/greenalien.png', 'assets/greenalien.json');
     this.load.tilemap('purplemap', 'assets/testmap.json', null, Phaser.Tilemap.TILED_JSON);
     this.load.image('purple', 'assets/purple.png');
+    this.load.json('tilemap', 'assets/tilemaps/base.json');
+
+    // All the base map resources
+    this.load.tilemap('base', 'assets/tilemaps/base.json', null, Phaser.Tilemap.TILED_JSON);
+    this.load.image('items', 'assets/tilemaps/items_spritesheet.png');
+    this.load.image('winter', 'assets/tilemaps/winter.png');
+    this.load.image('buildings', 'assets/tilemaps/buildings.png');
+    this.load.image('tiles', 'assets/tilemaps/tiles.png');
+    this.load.image('meta', 'assets/tilemaps/meta_tiles.png');
   },
   create: function() {
     this.asset.cropEnabled = false;

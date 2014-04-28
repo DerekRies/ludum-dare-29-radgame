@@ -18,6 +18,15 @@ Preload.prototype = {
     this.load.atlasJSONArray('p1', 'assets/greenalien.png', 'assets/greenalien.json');
     this.load.tilemap('purplemap', 'assets/testmap.json', null, Phaser.Tilemap.TILED_JSON);
     this.load.image('purple', 'assets/purple.png');
+    this.load.json('tilemap', 'assets/tilemaps/base.json');
+
+    // All the base map resources
+    this.load.tilemap('base', 'assets/tilemaps/base.json', null, Phaser.Tilemap.TILED_JSON);
+    this.load.image('items', 'assets/tilemaps/items_spritesheet.png');
+    this.load.image('winter', 'assets/tilemaps/winter.png');
+    this.load.image('buildings', 'assets/tilemaps/buildings.png');
+    this.load.image('tiles', 'assets/tilemaps/tiles.png');
+    this.load.image('meta', 'assets/tilemaps/meta_tiles.png');
   },
   create: function() {
     this.asset.cropEnabled = false;

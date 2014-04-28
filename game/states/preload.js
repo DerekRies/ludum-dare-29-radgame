@@ -16,7 +16,8 @@ Preload.prototype = {
     // this.load.image('player', 'assets/Player/p1_front.png');
     // this.load.spritesheet('p1', 'assets/Player/p1_spritesheet.png', 72, 97)
     this.load.atlasJSONArray('p1', 'assets/greenalien.png', 'assets/greenalien.json');
-
+    this.load.tilemap('purplemap', 'assets/testmap.json', null, Phaser.Tilemap.TILED_JSON);
+    this.load.image('purple', 'assets/purple.png');
   },
   create: function() {
     this.asset.cropEnabled = false;

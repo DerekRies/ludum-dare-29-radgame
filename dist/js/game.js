@@ -106,6 +106,10 @@ Player.prototype.update = function() {
   }*/
 };
 
+Player.prototype.reduceAir = function(reduction) {
+  this.air -= reduction;
+};
+
 Player.prototype.transitionState = function(newState) {
   this.states[this.activeState].leave(this, newState);
   this.states[newState].enter(this, this.activeState);
@@ -125,20 +129,21 @@ var StandingState = function () {};
 StandingState.prototype = new EntityState();
 StandingState.prototype.constructor = StandingState;
 StandingState.prototype.update = function(entity) {
-  function left () {
-    return entity.game.input.keyboard.isDown(Phaser.Keyboard.LEFT) ||
-            entity.game.input.keyboard.isDown(Phaser.Keyboard.A);
+  if(entity.game.input.keyboard.isDown(Phaser.Keyboard.Q)) {
+    entity.y++;
   }
-  function right () {
-    return entity.game.input.keyboard.isDown(Phaser.Keyboard.RIGHT) ||
-            entity.game.input.keyboard.isDown(Phaser.Keyboard.D);
+  else if(entity.game.input.keyboard.isDown(Phaser.Keyboard.E)) {
+    entity.y--;
   }
-  if(left()) {
+
+  if(entity.game.input.keyboard.isDown(Phaser.Keyboard.LEFT) ||
+            entity.game.input.keyboard.isDown(Phaser.Keyboard.A)) {
     entity.x -= entity.speed;
     entity.scale.x = -1;
     entity.animations.play('running');
   }
-  else if(right()) {
+  else if(entity.game.input.keyboard.isDown(Phaser.Keyboard.RIGHT) ||
+            entity.game.input.keyboard.isDown(Phaser.Keyboard.D)) {
     entity.x += entity.speed;
     entity.scale.x = 1;
     entity.animations.play('running');
@@ -301,17 +306,20 @@ var Player = require('../prefabs/player');
 
       // this.sprite.events.onInputDown.add(this.clickListener, this);
 
+      this.map = this.game.add.tilemap('purplemap');
+      this.map.addTilesetImage('purple');
+      this.firstLayer = this.map.createLayer('Ground');
+      this.firstLayer.resizeWorld();
+
       var x = this.game.width/2,
           y = this.game.height/2;
-      // this.player = new Player(this.game, x, y);
-      this.player = new Player(this.game, x, y);
+      this.player = new Player(this.game, x, 2100);
       this.game.add.existing(this.player)
       window.player = this.player;
-      console.log(this);
 
+      this.game.camera.follow(this.player);
     },
     update: function() {
-
     },
     clickListener: function() {
       this.game.state.start('gameover');
@@ -338,7 +346,8 @@ Preload.prototype = {
     // this.load.image('player', 'assets/Player/p1_front.png');
     // this.load.spritesheet('p1', 'assets/Player/p1_spritesheet.png', 72, 97)
     this.load.atlasJSONArray('p1', 'assets/greenalien.png', 'assets/greenalien.json');
-
+    this.load.tilemap('purplemap', 'assets/testmap.json', null, Phaser.Tilemap.TILED_JSON);
+    this.load.image('purple', 'assets/purple.png');
   },
   create: function() {
     this.asset.cropEnabled = false;

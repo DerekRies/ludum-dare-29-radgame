@@ -15,17 +15,20 @@ var Player = require('../prefabs/player');
 
       // this.sprite.events.onInputDown.add(this.clickListener, this);
 
+      this.map = this.game.add.tilemap('purplemap');
+      this.map.addTilesetImage('purple');
+      this.firstLayer = this.map.createLayer('Ground');
+      this.firstLayer.resizeWorld();
+
       var x = this.game.width/2,
           y = this.game.height/2;
-      // this.player = new Player(this.game, x, y);
-      this.player = new Player(this.game, x, y);
+      this.player = new Player(this.game, x, 2100);
       this.game.add.existing(this.player)
       window.player = this.player;
-      console.log(this);
 
+      this.game.camera.follow(this.player);
     },
     update: function() {
-
     },
     clickListener: function() {
       this.game.state.start('gameover');

@@ -88,6 +88,10 @@ Player.prototype.update = function() {
   }*/
 };
 
+Player.prototype.reduceAir = function(reduction) {
+  this.air -= reduction;
+};
+
 Player.prototype.transitionState = function(newState) {
   this.states[this.activeState].leave(this, newState);
   this.states[newState].enter(this, this.activeState);
@@ -107,20 +111,21 @@ var StandingState = function () {};
 StandingState.prototype = new EntityState();
 StandingState.prototype.constructor = StandingState;
 StandingState.prototype.update = function(entity) {
-  function left () {
-    return entity.game.input.keyboard.isDown(Phaser.Keyboard.LEFT) ||
-            entity.game.input.keyboard.isDown(Phaser.Keyboard.A);
+  if(entity.game.input.keyboard.isDown(Phaser.Keyboard.Q)) {
+    entity.y++;
   }
-  function right () {
-    return entity.game.input.keyboard.isDown(Phaser.Keyboard.RIGHT) ||
-            entity.game.input.keyboard.isDown(Phaser.Keyboard.D);
+  else if(entity.game.input.keyboard.isDown(Phaser.Keyboard.E)) {
+    entity.y--;
   }
-  if(left()) {
+
+  if(entity.game.input.keyboard.isDown(Phaser.Keyboard.LEFT) ||
+            entity.game.input.keyboard.isDown(Phaser.Keyboard.A)) {
     entity.x -= entity.speed;
     entity.scale.x = -1;
     entity.animations.play('running');
   }
-  else if(right()) {
+  else if(entity.game.input.keyboard.isDown(Phaser.Keyboard.RIGHT) ||
+            entity.game.input.keyboard.isDown(Phaser.Keyboard.D)) {
     entity.x += entity.speed;
     entity.scale.x = 1;
     entity.animations.play('running');

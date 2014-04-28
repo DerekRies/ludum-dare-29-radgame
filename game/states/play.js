@@ -44,10 +44,13 @@ var Player = require('../prefabs/player');
 
       console.log(this.collisionLayer);
 
-      this.map.setCollisionBetween(65,66, true, this.collisionLayer);
+      this.map.setCollision(65, true, this.collisionLayer);
       this.player = new Player(this.game, 0, 0);
       this.game.add.existing(this.player)
       this.game.physics.arcade.gravity.y = 1000;
+      this.player.events.onKilled.add(function () {
+        this.game.state.start('gameover');
+      }, this);
       this.spawnPlayer();
 
       window.player = this.player;
